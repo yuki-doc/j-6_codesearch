@@ -105,10 +105,19 @@ function parseHeadChord(chord) {
 }
 
 function inferBaseType(suffix) {
-  const lower = suffix.toLowerCase();
+  const raw = (suffix || "").trim();
+  const lower = raw.toLowerCase();
+
+  // Case-sensitive priority:
+  // - "M7", "M13" etc. => major
+  // - "m7", "m9" etc.  => minor
+  if (raw.startsWith("M")) return "major";
+  if (raw.startsWith("m") && !lower.startsWith("maj")) return "minor";
+
+  if (lower.startsWith("major")) return "major";
+  if (lower.startsWith("maj")) return "major";
   if (lower.startsWith("minor")) return "minor";
   if (lower.startsWith("min")) return "minor";
-  if (lower.startsWith("m") && !lower.startsWith("maj")) return "minor";
   return "major";
 }
 
