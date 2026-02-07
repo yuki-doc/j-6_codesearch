@@ -467,7 +467,8 @@ function createPianoKeyboard(chords) {
   });
 
   keyboard.addEventListener("click", (event) => {
-    const keyEl = event.target.closest(".piano-key");
+    const targetEl = event.target instanceof Element ? event.target : null;
+    const keyEl = targetEl ? targetEl.closest(".piano-key") : null;
     if (!keyEl || keyEl.classList.contains("is-empty")) return;
     const wasOpen = keyEl.classList.contains("is-open");
     closeAllTonePopups();
@@ -608,7 +609,8 @@ tensionInput.addEventListener("change", () => {
 });
 
 document.addEventListener("click", (event) => {
-  if (!event.target.closest(".piano-key")) {
+  const targetEl = event.target instanceof Element ? event.target : null;
+  if (!targetEl || !targetEl.closest(".piano-key")) {
     closeAllTonePopups();
   }
 });
