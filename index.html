@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>J-6 コードセット検索</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+
+    <main class="page">
+      <header class="hero">
+        <div class="hero__title">
+          <span class="hero__eyebrow">Roland J-6</span>
+          <h1>コードセット検索</h1>
+          <p>
+            目的のコードが含まれるコードセットを探し、必要ならトランスポーズ量を
+            確認できます。
+          </p>
+        </div>
+        <div class="hero__panel">
+          <div class="panel__row">
+            <label class="field">
+              <span class="field__label">ルート</span>
+              <input id="rootInput" list="noteList" placeholder="C, C#, Db..." />
+            </label>
+            <label class="field">
+              <span class="field__label">基本タイプ</span>
+              <select id="baseTypeInput">
+                <option value="major">メジャー</option>
+                <option value="minor">マイナー</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field__label">テンション絞り込み</span>
+              <select id="tensionInput">
+                <option value="">指定なし</option>
+              </select>
+              <small class="hint">例: 9, add9, 6, M7 など</small>
+            </label>
+          </div>
+          <div class="panel__row panel__row--compact">
+            <button id="searchBtn" class="primary">検索</button>
+            <button id="showAllBtn" class="secondary">全コードセット表示</button>
+            <span id="status" class="status"></span>
+          </div>
+          <div class="panel__row">
+            <div class="coverage" id="coverage"></div>
+          </div>
+        </div>
+      </header>
+
+      <section class="results">
+        <div class="genre-filters" id="genreFilters"></div>
+        <div class="results__summary" id="summary"></div>
+        <div id="results"></div>
+      </section>
+    </main>
+
+    <datalist id="noteList">
+      <option value="C"></option>
+      <option value="C#"></option>
+      <option value="Db"></option>
+      <option value="D"></option>
+      <option value="D#"></option>
+      <option value="Eb"></option>
+      <option value="E"></option>
+      <option value="F"></option>
+      <option value="F#"></option>
+      <option value="Gb"></option>
+      <option value="G"></option>
+      <option value="G#"></option>
+      <option value="Ab"></option>
+      <option value="A"></option>
+      <option value="A#"></option>
+      <option value="Bb"></option>
+      <option value="B"></option>
+    </datalist>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
