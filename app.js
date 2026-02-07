@@ -20,8 +20,6 @@ const NOTE_TO_SEMITONE = {
   B: 11,
 };
 
-const SEMITONE_TO_SHARP = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-
 const TENSION_PRIORITY = [
   "6",
   "7",
@@ -255,90 +253,6 @@ function composeTargetChord(root, baseType, tension) {
   return `${root}${base}${tension || ""}`;
 }
 
-function uniqueSortedIntervals(intervals) {
-  return Array.from(new Set(intervals)).sort((a, b) => a - b);
-}
-
-function addOrReplaceInterval(intervals, oldVal, newVal) {
-  const idx = intervals.indexOf(oldVal);
-  if (idx >= 0) intervals[idx] = newVal;
-  else intervals.push(newVal);
-}
-
-function buildIntervalsFromSuffix(suffix) {
-  const raw = suffix || "";
-  const lower = raw.toLowerCase();
-  const numericPart = lower.replace(/add9/g, "").replace(/add11/g, "");
-  let intervals = [0, 4, 7];
-
-  if (/4c4/i.test(raw)) intervals = [0, 5, 7];
-  else if (/5c4/i.test(raw) || /^5/.test(lower)) intervals = [0, 7];
-  else if (/sus2/i.test(raw)) intervals = [0, 2, 7];
-  else if (/sus4/i.test(raw) || /sus(?!2)/i.test(raw)) intervals = [0, 5, 7];
-  else if (/dim/i.test(raw)) intervals = [0, 3, 6];
-  else if (/aug/i.test(raw) || /#5/i.test(raw)) intervals = [0, 4, 8];
-  else if (/^minor/i.test(raw) || /^min/i.test(raw) || (/^m/i.test(raw) && !/^maj/i.test(raw))) {
-    intervals = [0, 3, 7];
-  }
-
-  if (/no3/i.test(raw)) {
-    intervals = intervals.filter((v) => v !== 3 && v !== 4);
-  }
-  if (/b5/i.test(raw)) {
-    addOrReplaceInterval(intervals, 7, 6);
-  }
-  if (/#5/i.test(raw)) {
-    addOrReplaceInterval(intervals, 7, 8);
-  }
-
-  if (/dim7/i.test(raw)) intervals.push(9);
-  else if (/maj7/i.test(raw) || /M7/.test(raw)) intervals.push(11);
-  else if (/(^|[^0-9])7([^0-9]|$)/.test(numericPart)) intervals.push(10);
-
-  if (/(^|[^0-9])6([^0-9]|$)/.test(numericPart)) intervals.push(9);
-
-  if (/b9/i.test(raw)) intervals.push(13);
-  else if (/add9/i.test(raw) || /(^|[^0-9])9([^0-9]|$)/.test(numericPart)) intervals.push(14);
-
-  if (/#11/i.test(raw)) intervals.push(18);
-  else if (/add11/i.test(raw) || /(^|[^0-9])11([^0-9]|$)/.test(numericPart)) intervals.push(17);
-
-  if (/b13/i.test(raw)) intervals.push(20);
-  else if (/(^|[^0-9])13([^0-9]|$)/.test(numericPart)) intervals.push(21);
-
-  return uniqueSortedIntervals(intervals);
-}
-
-function formatPitchClass(value) {
-  return SEMITONE_TO_SHARP[((value % 12) + 12) % 12];
-}
-
-function intervalToNote(rootSemi, interval, baseOctave) {
-  const sum = rootSemi + interval;
-  const note = formatPitchClass(sum);
-  const octave = baseOctave + Math.floor(sum / 12);
-  return `${note}${octave}`;
-}
-
-function chordToToneNames(chord) {
-  const parsed = parseChordSymbol(chord || "");
-  if (!parsed.root) return [];
-  const rootSemi = semitone(parsed.root);
-  if (rootSemi == null) return [];
-
-  const intervals = buildIntervalsFromSuffix(parsed.suffix);
-  const tones = intervals.map((interval) => intervalToNote(rootSemi, interval, 5));
-
-  if (parsed.bass) {
-    const bassSemi = semitone(parsed.bass);
-    if (bassSemi != null) {
-      tones.unshift(`${formatPitchClass(bassSemi)}4`);
-    }
-  }
-
-  return Array.from(new Set(tones));
-}
-
 function buildTarget() {
   const root = normalizeNote(rootInput.value);
   if (!root) return { error: "有効なルート音を入力してください（C, C#, Db...）。" };
@@ -408,11 +322,15 @@ function renderSummary(results, visible) {
   summaryEl.textContent = `${genreLabel} | ${label} で一致: ${matched} / ${filtered.length} セット`;
 }
 
-function buildChordMap(chords) {
+function buildChordMap(chords, voicings) {
   const map = {};
   chords.forEach((chord, idx) => {
     const key = (DATA.keys && DATA.keys[idx]) || "";
-    if (key) map[key] = chord;
+    if (!key) return;
+    map[key] = {
+      chord,
+      voicing: Array.isArray(voicings) ? voicings[idx] || null : null,
+    };
   });
   return map;
 }
@@ -421,7 +339,9 @@ function closeAllTonePopups() {
   document.querySelectorAll(".piano-key.is-open").forEach((el) => el.classList.remove("is-open"));
 }
 
-function createPianoKey(note, chord, variant) {
+function createPianoKey(note, entry, variant) {
+  const chord = entry ? entry.chord : null;
+  const voicing = entry ? entry.voicing : null;
   const keyEl = document.createElement("button");
   keyEl.type = "button";
   keyEl.className = `piano-key piano-key--${variant}`;
@@ -433,24 +353,27 @@ function createPianoKey(note, chord, variant) {
   const chordEl = document.createElement("span");
   chordEl.className = "piano-chord";
   chordEl.textContent = chord || "-";
+  keyEl.append(noteEl, chordEl);
+
+  if (!chord) {
+    keyEl.classList.add("is-empty");
+    keyEl.disabled = true;
+    return keyEl;
+  }
 
   const popup = document.createElement("span");
   popup.className = "chord-popup";
-  if (chord) {
-    const tones = chordToToneNames(chord);
-    popup.textContent = tones.length > 0 ? `構成音: ${tones.join(" / ")}` : "構成音を解析できませんでした。";
+  if (Array.isArray(voicing) && voicing.length > 0) {
+    popup.textContent = `構成音: ${voicing.join(" / ")}`;
   } else {
-    popup.textContent = "このキーにコードはありません。";
-    keyEl.classList.add("is-empty");
-    keyEl.disabled = true;
+    popup.textContent = "構成音データがありません。";
   }
-
-  keyEl.append(noteEl, chordEl, popup);
+  keyEl.appendChild(popup);
   return keyEl;
 }
 
-function createPianoKeyboard(chords) {
-  const chordMap = buildChordMap(chords);
+function createPianoKeyboard(chords, voicings) {
+  const chordMap = buildChordMap(chords, voicings);
 
   const wrap = document.createElement("div");
   wrap.className = "keyboard-wrap";
@@ -537,7 +460,7 @@ function renderResults(results) {
       matchList.appendChild(info);
     }
 
-    const keyboard = createPianoKeyboard(set.chords);
+    const keyboard = createPianoKeyboard(set.chords, set.voicings);
     card.append(header, matchList, keyboard);
     resultsEl.appendChild(card);
   });
