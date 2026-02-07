@@ -307,6 +307,7 @@ select {
   left: 0;
   right: 0;
   height: 62%;
+  pointer-events: none;
 }
 
 .piano-key {
@@ -346,6 +347,7 @@ select {
   width: var(--black-key-width);
   height: 100%;
   z-index: 2;
+  pointer-events: auto;
   border-radius: 0 0 10px 10px;
   background: linear-gradient(180deg, #35383d 0%, #1f2023 100%);
   border: 1px solid rgba(0, 0, 0, 0.45);
@@ -392,7 +394,7 @@ select {
 .chord-popup {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 8px);
+  bottom: 12px;
   transform: translateX(-50%) translateY(6px);
   min-width: 160px;
   max-width: 240px;
@@ -411,14 +413,7 @@ select {
 }
 
 .chord-popup::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  transform: translateX(-50%);
-  border-width: 6px 6px 0 6px;
-  border-style: solid;
-  border-color: #fff transparent transparent transparent;
+  content: none;
 }
 
 .piano-key--black .chord-popup {
@@ -427,9 +422,13 @@ select {
 }
 
 .piano-key--black .chord-popup::after {
-  top: auto;
+  content: "";
+  position: absolute;
+  left: 50%;
   bottom: 100%;
+  transform: translateX(-50%);
   border-width: 0 6px 6px 6px;
+  border-style: solid;
   border-color: transparent transparent #fff transparent;
 }
 
