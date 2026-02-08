@@ -244,6 +244,11 @@ function formatSigned(value) {
   return value > 0 ? `+${value}` : `${value}`;
 }
 
+function formatPercent01(value) {
+  if (typeof value !== "number" || Number.isNaN(value)) return null;
+  return `${Math.round(value * 100)}%`;
+}
+
 function toSignedSemitone(unsignedDelta) {
   return unsignedDelta <= 6 ? unsignedDelta : unsignedDelta - 12;
 }
@@ -372,6 +377,45 @@ function createPianoKey(note, entry, variant) {
   return keyEl;
 }
 
+function createAnalysisBlock(analysis) {
+  if (!analysis) return null;
+  const inferredKey = analysis.whiteInferredKey || analysis.bestKey || null;
+  const inferredScore =
+    typeof analysis.whiteInferredKeyScore === "number"
+      ? analysis.whiteInferredKeyScore
+      : analysis.diatonicToneRatio;
+  const ratioLabel = formatPercent01(inferredScore);
+  const tags = Array.isArray(analysis.tags) ? analysis.tags.filter(Boolean) : [];
+  const topKeys = Array.isArray(analysis.topKeys)
+    ? analysis.topKeys
+        .map((entry) => (entry && typeof entry.key === "string" ? entry.key : null))
+        .filter(Boolean)
+        .slice(0, 3)
+    : [];
+
+  if (!inferredKey && !ratioLabel && tags.length === 0 && topKeys.length === 0) {
+    return null;
+  }
+
+  const wrap = document.createElement("div");
+  wrap.className = "analysis";
+
+  const parts = [];
+  if (inferredKey) parts.push(`推定キー: ${inferredKey}`);
+  if (ratioLabel) parts.push(`適合率: ${ratioLabel}`);
+  if (topKeys.length) parts.push(`候補キー: ${topKeys.join(", ")}`);
+  if (tags.length) parts.push(`タグ: ${tags.join(", ")}`);
+
+  if (parts.length > 0) {
+    const meta = document.createElement("div");
+    meta.className = "analysis__meta";
+    meta.textContent = parts.join(" | ");
+    wrap.appendChild(meta);
+  }
+
+  return wrap;
+}
+
 function createPianoKeyboard(chords, voicings) {
   const chordMap = buildChordMap(chords, voicings);
 
@@ -460,8 +504,13 @@ function renderResults(results) {
       matchList.appendChild(info);
     }
 
+    const analysis = createAnalysisBlock(set.analysis);
     const keyboard = createPianoKeyboard(set.chords, set.voicings);
-    card.append(header, matchList, keyboard);
+    if (analysis) {
+      card.append(header, matchList, analysis, keyboard);
+    } else {
+      card.append(header, matchList, keyboard);
+    }
     resultsEl.appendChild(card);
   });
 }
