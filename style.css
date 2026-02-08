@@ -297,6 +297,8 @@ select {
 }
 
 .keyboard-white-keys {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   height: 100%;
@@ -308,6 +310,7 @@ select {
   left: 0;
   right: 0;
   height: 62%;
+  z-index: 12;
   pointer-events: none;
 }
 
@@ -325,6 +328,7 @@ select {
 }
 
 .piano-key--white {
+  z-index: 1;
   background: linear-gradient(180deg, #ffffff 0%, #f3eee5 88%);
   border-right: 1px solid rgba(24, 24, 24, 0.12);
   padding: 10px 8px 14px;
@@ -347,7 +351,7 @@ select {
   left: calc(var(--left) - var(--black-key-width) / 2);
   width: var(--black-key-width);
   height: 100%;
-  z-index: 2;
+  z-index: 16;
   pointer-events: auto;
   border-radius: 0 0 10px 10px;
   background: linear-gradient(180deg, #35383d 0%, #1f2023 100%);
@@ -409,7 +413,7 @@ select {
   line-height: 1.35;
   opacity: 0;
   pointer-events: none;
-  z-index: 6;
+  z-index: 8;
   transition: opacity 0.16s ease, transform 0.16s ease;
 }
 
@@ -420,6 +424,7 @@ select {
 .piano-key--black .chord-popup {
   bottom: auto;
   top: calc(100% + 8px);
+  z-index: 20;
 }
 
 .piano-key--black .chord-popup::after {
@@ -432,6 +437,25 @@ select {
 .piano-key.is-open .chord-popup {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+.analysis {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(24, 24, 24, 0.08);
+  background: #f9f7f3;
+}
+
+.analysis__summary {
+  font-size: 0.95rem;
+  color: #2a2d33;
+  margin-bottom: 6px;
+}
+
+.analysis__meta {
+  font-size: 0.82rem;
+  color: var(--muted);
 }
 
 @keyframes fadeUp {
